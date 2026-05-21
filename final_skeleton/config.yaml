@@ -1,0 +1,68 @@
+# ============================================================
+# UrbanAir 最终版配置文件
+# 用法: python train.py --config config.yaml
+# ============================================================
+
+# --- 数据 ---
+data:
+  cities: ["北京","上海","广州","成都","武汉","西安","南京","杭州","郑州","长沙"]
+  date_range: ["2023-01-01", "2024-12-31"]
+  satellite:
+    enabled: true
+    source: "sentinel-2"         # sentinel-2 | worldcover | none
+    bands: ["B04","B03","B02"]   # RGB
+    patch_size_km: 1.0
+    image_size: 224
+    seasons: ["spring","summer","autumn","winter"]
+  osm:
+    enabled: true
+    radii_m: [1000, 3000, 5000]  # 多尺度缓冲区
+  weather:
+    enabled: true
+    variables: ["temperature_2m_mean","relative_humidity_2m_mean",
+                "wind_speed_10m_mean","wind_direction_10m_dominant",
+                "surface_pressure_mean","precipitation_sum","cloud_cover_mean"]
+
+# --- 模型 ---
+model:
+  name: "attn_fusion"            # rf | xgboost | resnet | early_fusion | attn_fusion | late_fusion
+  resnet:
+    backbone: "resnet50"
+    pretrained: "eurosat"        # eurosat | imagenet
+    freeze_layers: [1,2,3]       # 冻结前3层
+    feature_dim: 2048
+  fusion:
+    hidden_dim: 256
+    num_heads: 8
+    dropout: 0.1
+    mlp_hidden: [768, 512, 256, 128]
+
+# --- 训练 ---
+training:
+  batch_size: 64
+  epochs: 100
+  early_stop_patience: 15
+  optimizer: "adamw"
+  learning_rate: 1.0e-4
+  weight_decay: 1.0e-4
+  lr_schedule: "cosine"
+  loss:
+    reg_weight: 0.7             # SmoothL1 权重
+    cls_weight: 0.3             # CrossEntropy 权重
+
+# --- 数据划分 ---
+split:
+  method: "temporal"             # temporal | random | spatial
+  train_cutoff: "2024-10-01"
+  train_ratio: 0.7
+  val_ratio: 0.15
+  test_ratio: 0.15
+
+# --- 输出 ---
+output:
+  model_dir: "checkpoints/"
+  log_dir: "logs/"
+  result_dir: "results/"
+
+# --- 随机种子 ---
+seed: 42
