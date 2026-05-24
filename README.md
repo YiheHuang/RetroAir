@@ -100,7 +100,7 @@ python scripts/06_compare_algorithms.py
 streamlit run app.py
 ```
 
-![alt text](41ac733772eacef2609de1baf8b2e647.png)
+![alt text](streamlit_demo.png)
 
 ---
 
