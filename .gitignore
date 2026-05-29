@@ -5,3 +5,10 @@ data/
 *.pyc
 
 old_repo/
+
+*.aux
+*.log
+*.toc
+*.out
+
+AGENTS.md
