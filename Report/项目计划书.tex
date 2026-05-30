@@ -1,0 +1,276 @@
+\documentclass[UTF8,zihao=-4,a4paper]{ctexart}
+
+\usepackage{geometry}
+\usepackage{fontspec}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+
+\geometry{left=2.5cm,right=2.5cm,top=2.6cm,bottom=2.6cm}
+\IfFontExistsTF{Times New Roman}{\setmainfont{Times New Roman}}{\setmainfont{TeX Gyre Termes}}
+\setlength{\parindent}{2em}
+\setlength{\parskip}{0.2em}
+\linespread{1.28}
+\emergencystretch=2em
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=blue,
+  pdftitle={RetroAir 项目计划书},
+  pdfauthor={黄一和、夏浩博、黄迪、许君达}
+}
+
+\pagestyle{fancy}
+\setlength{\headheight}{15pt}
+\fancyhf{}
+\fancyhead[C]{RetroAir 项目计划书}
+\fancyfoot[C]{\thepage}
+
+\titleformat{\section}{\centering\heiti\zihao{3}}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\heiti\zihao{4}}{\thesubsection}{0.6em}{}
+\captionsetup{font=small,labelfont=bf}
+\setlist{nosep,leftmargin=2em}
+
+\newcommand{\pmfine}{PM$_{2.5}$}
+\newcommand{\aodd}{AOD}
+
+% 参考文献以上标形式显示
+\let\oldcite\cite
+\renewcommand{\cite}[1]{\textsuperscript{\oldcite{#1}}}
+
+\begin{document}
+
+\begin{titlepage}
+  \centering
+  \vspace*{2.6cm}
+  {\zihao{1}\heiti RetroAir 项目计划书\par}
+  \vspace{0.8cm}
+  {\zihao{3}\heiti 基于卫星 AOD 与气象数据的历史 PM2.5 回顾性推断系统\par}
+  \vspace{1.8cm}
+  {\zihao{4}选题类别：选项 C——端到端应用系统开发\par}
+  \vspace{0.8cm}
+  {\zihao{4}团队成员：黄一和、夏浩博、黄迪、许君达\par}
+  \vfill
+  {\zihao{4}2026 年 5 月\par}
+\end{titlepage}
+
+\section{项目目标}
+
+本项目旨在构建一个完整的端到端 \pmfine{} 回顾性推断系统。核心思路是利用地面监测站已有的历史 \pmfine{} 观测数据作为监督标签，结合该位置的卫星气溶胶光学厚度数据和气象再分析数据，训练回归模型，从而推断无监测站覆盖地区的历史 \pmfine{} 浓度。
+
+项目的最终交付物包括：
+\begin{enumerate}
+  \item 一套可自动化运行的多源数据获取与融合流水线；
+  \item 一个经过多算法对比和特征消融验证的最优预测模型；
+  \item 一个基于 Web 的交互式推理应用，用户可通过地图选点和日期选择获取任意位置的 \pmfine{} 估计值。
+\end{enumerate}
+
+\section{项目背景与动机}
+
+\subsection{为什么需要这个系统？}
+
+\pmfine{} 是最主要的空气污染物之一，对呼吸系统和心血管健康有显著危害\cite{who2021}。然而，地面空气质量监测站的建设与维护成本极高——我国国控空气站点在"十三五"期间为 1,436 个，"十四五"优化为 1,734 个，主要覆盖地级及以上城市区域\cite{mee2020}，广大农村和中小城市几乎无覆盖。对于流行病学研究和环境健康评估而言，历史 \pmfine{} 的空间缺失是一个长期未解决的问题\cite{holloway2021}。
+
+\subsection{技术可行性}
+
+近年来，卫星遥感技术提供了全球覆盖的气溶胶数据。欧洲中期天气预报中心旗下的 CAMS EAC4 再分析数据集提供了 2003 年至今的全球气溶胶光学厚度，包含总 \aodd{} 及各组分的浓度估计\cite{cams}。同时，NASA POWER 提供了免费的全球历史气象数据接口\cite{nasa_power}。
+
+已有研究表明，\aodd{} 与地面 \pmfine{} 之间存在统计相关性\cite{xin2016}，且气象条件（温度、湿度、风速等）显著影响气溶胶的扩散与转化\cite{zheng2017}。利用机器学习模型融合卫星遥感与气象数据进行 \pmfine{} 估计的方法已被验证可行\cite{wei2019}。因此，利用 \aodd{} 加气象作为特征、监测站 \pmfine{} 作为标签来训练回归模型，在技术上是可行且有文献支持的。
+
+\section{数据来源与特征设计}
+
+\subsection{数据来源}
+
+计划使用以下三类公开数据源：
+
+\begin{table}[H]
+  \centering
+  \caption{计划使用的数据来源}
+  \small
+  \begin{tabularx}{\textwidth}{lllX}
+    \toprule
+    数据 & 来源 & 分辨率 & 覆盖 \\
+    \midrule
+    \pmfine{} 标签 & AKShare 真气网 API & 站点级 & 中国主要城市 2018--2025 \\
+    气象数据 & NASA POWER API & 0.5\textdegree{} 日均 & 全球 \\
+    气溶胶 \aodd{} & CAMS EAC4 (Copernicus ADS) & 0.75\textdegree{} 日均 & 全球，2003 年至今 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{特征设计}
+
+初步计划使用以下特征组进行模型训练：
+
+\begin{table}[H]
+  \centering
+  \caption{计划使用的特征组}
+  \begin{tabularx}{\textwidth}{lcX}
+    \toprule
+    特征组 & 数量 & 变量说明 \\
+    \midrule
+    \aodd{} & 9 & 总气溶胶光学厚度、各组分 \aodd{}（沙尘、硫酸盐、黑碳、有机物、海盐）及波长指数 \\
+    气象 & 7 & 温度、相对湿度、风速、风向、气压、降水、云量 \\
+    时间 & 1 & 年内第几天，用于捕捉季节性周期 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+同时，我们计划探索 OSM 空间特征和 MODIS RGB 地表反射率特征作为潜在补充维度\cite{li2017}。若后续消融实验证明其有效，则加入最终模型；否则将放弃。
+
+\subsection{数据管道设计}
+
+计划按以下流程构建自动化数据管道：
+
+\begin{enumerate}
+  \item 调用 AKShare API 逐城市逐日抓取监测站数据，关联公开站点坐标清单；
+  \item 根据站点经纬度批量调用 NASA POWER API 获取逐日气象数据；
+  \item 从 CAMS EAC4 NetCDF 文件中按经纬度和日期提取 \aodd{} 特征值；
+  \item 以（城市，站点名称，日期）为键执行 inner join，补充时间编码；
+  \item 合并各城市独立数据集为全国多城训练集。
+\end{enumerate}
+
+\section{模型方案与评估策略}
+
+\subsection{模型选择}
+
+计划实现并对比 5 至 6 种回归算法，覆盖树模型与深度学习两大类：
+
+\begin{itemize}
+  \item 树模型：LightGBM、XGBoost、CatBoost；
+  \item 深度学习：ResMLP、DCN-V2、FT-Transformer。
+\end{itemize}
+
+\subsection{评估策略}
+
+\begin{itemize}
+  \item \textbf{数据切分}：由于本任务是空间插值而非时间预测，采用随机切分策略评估模型在整体历史分布上的拟合和泛化能力；
+  \item \textbf{评估指标}：$R^2$、RMSE、MAE、SMAPE、MAPE、Pearson 相关系数、Explained Variance；
+  \item \textbf{消融实验}：对气象、\aodd{}、OSM、RGB 四个特征维度做排列组合实验（共 15 组），确定最优特征组合。
+\end{itemize}
+
+\subsection{模型部署}
+
+训练完成后，将最优模型的权重与特征定标器保存为文件，供 Web 应用加载推理使用。
+
+\section{Web 应用设计}
+
+计划使用 Streamlit 框架构建轻量级交互式 Web 界面，提供以下功能：
+
+\begin{itemize}
+  \item 地图交互选点，用户可通过点击地图或拖动方式选择目标位置；
+  \item 城市快捷选择，预设国内外主要城市坐标便于快速测试；
+  \item 日期选择，覆盖 2018 年至 CAMS 最新可用年份；
+  \item 一键预测，系统自动完成气象获取、\aodd{} 提取、特征标准化和模型推理；
+  \item 特征详情，用户可展开查看具体的气象与 \aodd{} 数值，增强结果透明度。
+\end{itemize}
+
+\section{团队分工}
+
+团队四人按模块解耦分工，各自负责独立的子系统，通过明确的接口（数据格式、函数签名、文件路径）进行协作。各成员分工如下：
+
+\begin{table}[H]
+  \centering
+  \caption{团队分工方案}
+  \begin{tabularx}{\textwidth}{llX}
+    \toprule
+    成员 & 角色 & 职责说明 \\
+    \midrule
+    黄一和 & 算法核心 & 负责 \aodd{} 特征提取模块；设计并实现所有神经网络模型；搭建 PyTorch 训练框架；对深度学习模型进行训练与调优，并向夏浩博提供模型训练所需的特征数据格式规范 \\
+    夏浩博 & 数据工程 & 负责地面监测站 \pmfine{} 数据获取与清洗；气象数据批量下载与校验；多源数据合并与去重；构建整体数据管道编排脚本，向算法和评估模块输出统一格式的训练数据集 \\
+    黄迪 & 实验评估 & 负责树模型的实现与超参调优；设计并执行特征维度消融实验；搭建多算法统一对比框架；生成模型性能可视化图表；基于实验结果向全组推荐最优特征组合与部署模型 \\
+    许君达 & 工程部署 & 负责数据加载工具与评估指标模块；模型 I/O 与推理管线封装；开发基于 Streamlit 的交互式 Web 应用；项目文档撰写与演示材料准备 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+上述分工中，各成员的输出产品（数据集、模型文件、评估报告、Web 应用）具有明确的交付边界：数据工程输出训练集，算法核心输出训练好的模型权重，实验评估输出对比结果和特征选择建议，工程部署将这些组件集成为可运行的用户界面。成员之间的协作接口在项目启动阶段即约定好数据格式和文件路径，后续各模块可独立开发与调试。
+
+\section{时间规划}
+
+\begin{table}[H]
+  \centering
+  \caption{项目时间规划}
+  \begin{tabularx}{\textwidth}{cX}
+    \toprule
+    阶段 & 里程碑与产出 \\
+    \midrule
+    第 13 周 & 确定选题 C；评估各数据源的可行性与覆盖范围；搭建项目骨架与 Git 仓库；约定模块间接口规范 \\
+    第 14 周 & 完成 AQI、气象、\aodd{} 三源数据获取脚本；实现数据合并与清洗流程；构建单城市训练数据集 \\
+    第 15--16 周 & 实现全部计划模型；执行特征维度消融实验，确定最优特征组合；完成多算法对比实验 \\
+    第 16--17 周 & 构建 Streamlit 交互界面；集成推理管线；前后端联调测试；保存部署模型与定标器 \\
+    第 17--18 周 & 撰写项目报告（学术论文格式）；制作演示 PPT；录制系统演示视频；整理代码仓库 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{预期成果}
+
+\begin{enumerate}
+  \item 一套可自动化运行的数据管道，支持按城市和年份构建训练数据集；
+  \item 一个经过严格消融实验验证的最优模型，预期在测试集上 $R^2 > 0.85$；
+  \item 一个可交互的 Web 推理应用，支持任意位置的历史 \pmfine{} 推断；
+  \item 一份完整的技术报告，包含方法、实验、分析与结论。
+\end{enumerate}
+
+\section{风险与应对}
+
+\begin{table}[H]
+  \centering
+  \caption{风险分析与应对措施}
+  \begin{tabularx}{\textwidth}{lX}
+    \toprule
+    风险 & 应对措施 \\
+    \midrule
+    CAMS \aodd{} 数据更新滞后（通常 3 个月） & 对近期日期采用最近可用年份回退 \\
+    NASA POWER API 请求限流 & 使用多线程搭配本地缓存，减少重复请求 \\
+    部分特征维度无显著贡献 & 通过消融实验提前排除（如确有必要，放弃 OSM、RGB 等辅助维度） \\
+    团队模块集成困难 & 项目启动阶段约定统一的数据格式与接口规范，各模块独立测试后再集成 \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\begin{thebibliography}{99}
+
+\bibitem{who2021}
+World Health Organization. \textit{WHO global air quality guidelines: particulate matter (PM2.5 and PM10), ozone, nitrogen dioxide, sulfur dioxide and carbon monoxide}. 2021.
+
+\bibitem{mee2020}
+中华人民共和国生态环境部. 《对十三届全国人大三次会议第6307号建议的答复》. 2020.
+
+\bibitem{holloway2021}
+Holloway, T., Miller, D., Anenberg, S., et al. \textit{Satellite Monitoring for Air Quality and Health}. Annual Review of Biomedical Data Science, Vol.\ 4, pp.\ 417--447, 2021. \url{https://doi.org/10.1146/annurev-biodatasci-110920-093120}
+
+\bibitem{cams}
+Copernicus Atmosphere Monitoring Service / ECMWF. \textit{CAMS global reanalysis (EAC4)}. \url{https://ads.atmosphere.copernicus.eu/datasets/cams-global-reanalysis-eac4}
+
+\bibitem{nasa_power}
+NASA POWER Project. \textit{Daily API Documentation}. \url{https://power.larc.nasa.gov/docs/services/api/temporal/daily/}
+
+\bibitem{xin2016}
+Xin, J., et al. \textit{The observation-based relationships between PM2.5 and AOD over China}. Journal of Geophysical Research: Atmospheres, 2016.
+
+\bibitem{zheng2017}
+Zheng, Y., et al. \textit{Analysis of influential factors for the relationship between PM2.5 and AOD in Beijing}. Atmospheric Chemistry and Physics, 2017.
+
+\bibitem{wei2019}
+Wei, J., Huang, W., Li, Z., Xue, W., Peng, Y., Sun, L., \& Cribb, M. \textit{Estimating 1-km-resolution PM2.5 concentrations across China using the space-time random forest approach}. Remote Sensing of Environment, 2019.
+
+\bibitem{li2017}
+Li, L., et al. \textit{Mining Public Datasets for Modeling Intra-City PM2.5 Concentrations at a Fine Spatial Resolution}. Proceedings of the ACM SIGKDD International Workshop on Urban Computing, 2017.
+
+\end{thebibliography}
+
+\end{document}
