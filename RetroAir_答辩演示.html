@@ -1,0 +1,641 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RetroAir 项目答辩演示</title>
+  <style>
+    :root {
+      --bg: #f6f8f5;
+      --paper: #ffffff;
+      --ink: #17211b;
+      --muted: #607066;
+      --line: #dce5dd;
+      --deep: #173b2f;
+      --green: #2f8062;
+      --pale: #eaf2ed;
+      --gold: #c8912d;
+      --red: #c85242;
+      --blue: #346a92;
+      --shadow: 0 18px 55px rgba(23, 59, 47, .11);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: "Microsoft YaHei", "Noto Sans SC", "PingFang SC", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(47,128,98,.12), transparent 30%),
+        radial-gradient(circle at 90% 80%, rgba(200,145,45,.12), transparent 28%),
+        var(--bg);
+      color: var(--ink);
+      overflow: hidden;
+    }
+
+    .deck { width: 100vw; height: 100vh; position: relative; }
+    .slide {
+      position: absolute;
+      inset: 0;
+      display: none;
+      padding: 14px 20px;
+    }
+    .slide.active { display: block; }
+
+    .canvas {
+      width: min(1366px, calc(100vw - 24px));
+      height: min(768px, calc(100vh - 24px));
+      margin: 0 auto;
+      background: var(--paper);
+      border: 1px solid rgba(23,59,47,.08);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      padding: 46px 64px 42px;
+    }
+    .canvas::before {
+      content: "";
+      position: absolute;
+      left: -110px;
+      top: -130px;
+      width: 330px;
+      height: 330px;
+      border-radius: 50%;
+      background: rgba(47,128,98,.10);
+    }
+    .canvas::after {
+      content: "";
+      position: absolute;
+      right: -90px;
+      bottom: -120px;
+      width: 310px;
+      height: 310px;
+      border-radius: 50%;
+      background: rgba(200,145,45,.10);
+    }
+    .content { position: relative; z-index: 1; height: 100%; }
+    .content:not(.cover-title):not(.chapter) {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .kicker {
+      color: var(--green);
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      font-size: 15px;
+      margin-bottom: 14px;
+    }
+    h1, h2, h3, p { margin: 0; }
+    h1 {
+      font-size: 56px;
+      line-height: 1.12;
+      letter-spacing: -.035em;
+      color: var(--deep);
+      max-width: 980px;
+    }
+    h2 {
+      font-size: 42px;
+      line-height: 1.18;
+      letter-spacing: -.025em;
+      color: var(--deep);
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    h3 {
+      font-size: 22px;
+      color: var(--deep);
+      margin-bottom: 10px;
+    }
+    .lead {
+      font-size: 23px;
+      line-height: 1.62;
+      color: var(--muted);
+      max-width: 900px;
+      margin-top: 24px;
+    }
+    .center { text-align: center; }
+    .cover-title { margin-top: 82px; text-align: center; }
+    .cover-title h1 { margin: 0 auto; }
+    .subtitle {
+      margin: 20px auto 0;
+      color: var(--muted);
+      font-size: 24px;
+      line-height: 1.5;
+      max-width: 850px;
+    }
+    .team-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin: 50px auto 0;
+      max-width: 980px;
+    }
+    .member {
+      background: var(--pale);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 18px 12px;
+      text-align: center;
+    }
+    .member strong { display: block; font-size: 22px; color: var(--deep); margin-bottom: 6px; }
+    .member span { font-size: 15px; color: var(--muted); }
+
+    .chapter {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      text-align: center;
+    }
+    .chapter .num { font-size: 20px; color: var(--gold); font-weight: 800; letter-spacing: .16em; margin-bottom: 18px; }
+    .chapter h1 { margin: 0 auto; font-size: 60px; }
+    .chapter p { margin-top: 24px; font-size: 24px; color: var(--muted); }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: stretch; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+    .card {
+      background: #fbfcfb;
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 24px;
+      min-height: 130px;
+    }
+    .card p, li { font-size: 19px; line-height: 1.52; color: var(--muted); }
+    .card.center { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .stat { font-size: 48px; font-weight: 800; color: var(--green); letter-spacing: -.04em; margin-bottom: 8px; }
+    .small { font-size: 15px; color: var(--muted); line-height: 1.45; }
+    .source { position: absolute; left: 64px; right: 64px; bottom: 28px; font-size: 12px; color: #829087; text-align: center; }
+
+    ul { margin: 12px 0 0; padding-left: 22px; }
+    li { margin: 8px 0; }
+    .pipeline {
+      display: grid;
+      grid-template-columns: 1fr 48px 1fr 48px 1fr;
+      align-items: center;
+      gap: 8px;
+      margin-top: 34px;
+    }
+    .node {
+      border: 1px solid var(--line);
+      background: var(--pale);
+      border-radius: 22px;
+      padding: 26px 20px;
+      text-align: center;
+      min-height: 154px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .node strong { font-size: 24px; color: var(--deep); margin-bottom: 12px; display: block; }
+    .node span { font-size: 18px; color: var(--muted); line-height: 1.42; }
+    .arrow { text-align: center; color: var(--green); font-size: 36px; font-weight: 700; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 18px; overflow: hidden; border-radius: 18px; }
+    th, td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: center; }
+    th { background: var(--deep); color: #fff; font-weight: 700; }
+    td:first-child, th:first-child { text-align: left; }
+    tr.highlight td { background: #e8f3ee; color: var(--deep); font-weight: 800; }
+
+    .image-frame {
+      background: #f7faf8;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 18px;
+      height: 420px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .image-frame img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 14px; }
+    .screenshot img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+
+    .bars { display: grid; gap: 18px; margin-top: 24px; }
+    .bar-row { display: grid; grid-template-columns: 160px 1fr 90px; align-items: center; gap: 16px; font-size: 18px; color: var(--muted); }
+    .bar-bg { height: 20px; border-radius: 999px; background: #edf2ef; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 999px; background: var(--green); }
+    .bar-row:first-child { color: var(--deep); font-weight: 800; }
+
+    .model-diagram {
+      display: grid;
+      grid-template-columns: 1fr 40px 1fr 40px 1fr;
+      align-items: center;
+      gap: 10px;
+      margin: 30px auto 0;
+      max-width: 990px;
+    }
+    .block {
+      background: var(--pale);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      padding: 24px 16px;
+      text-align: center;
+      min-height: 122px;
+    }
+    .block strong { color: var(--deep); font-size: 22px; display: block; margin-bottom: 8px; }
+    .block span { color: var(--muted); font-size: 17px; line-height: 1.42; }
+    .plus { color: var(--gold); font-size: 34px; font-weight: 800; text-align: center; }
+
+    .demo-box {
+      height: 380px;
+      border-radius: 28px;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, #edf5ef, #fffaf0);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 34px;
+      align-items: center;
+      text-align: center;
+    }
+    .demo-steps { display: grid; gap: 14px; }
+    .step {
+      background: rgba(255,255,255,.78);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px 18px;
+      font-size: 20px;
+      color: var(--deep);
+      font-weight: 700;
+    }
+    .step span { color: var(--muted); font-weight: 400; margin-left: 8px; }
+
+    .footer-nav {
+      position: fixed;
+      right: 28px;
+      bottom: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 10;
+    }
+    button {
+      border: 1px solid rgba(23,59,47,.18);
+      background: rgba(255,255,255,.86);
+      color: var(--deep);
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+    }
+    .page-no { position: fixed; left: 30px; bottom: 28px; color: var(--muted); font-size: 14px; z-index: 10; }
+
+    @media print {
+      body { overflow: visible; background: white; }
+      .slide { display: block !important; position: relative; page-break-after: always; padding: 0; height: 100vh; }
+      .canvas { width: 100vw; height: 56.25vw; max-height: 100vh; box-shadow: none; border-radius: 0; border: none; }
+      .footer-nav, .page-no { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="deck" id="deck">
+    <section class="slide active">
+      <div class="canvas"><div class="content cover-title">
+        <div class="kicker">数据分析与数据挖掘期末项目答辩</div>
+        <h1>RetroAir：融合卫星 AOD 与气象数据的历史 PM2.5 回顾性推断系统</h1>
+        <p class="subtitle">从多源公开数据到模型评估，再到可交互空气质量推理应用</p>
+        <div class="team-strip">
+          <div class="member"><strong>黄一和</strong><span>2351269</span></div>
+          <div class="member"><strong>夏浩博</strong><span>2352048</span></div>
+          <div class="member"><strong>黄迪</strong><span>2354283</span></div>
+          <div class="member"><strong>许君达</strong><span>2351436</span></div>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content chapter">
+        <div>
+          <div class="num">第一章</div>
+          <h1>项目背景与目标</h1>
+          <p>为什么需要对无监测站区域进行历史 PM2.5 回顾性推断</p>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content">
+        <h2>研究动机：让空气质量数据覆盖“没有站点”的地方</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h3>现实问题</h3>
+            <ul>
+              <li>地面监测站精度高，但建设和维护成本高，空间覆盖有限。</li>
+              <li>农村、中小城市和城市边缘区历史 PM2.5 记录存在空白。</li>
+              <li>环境健康研究和城市治理需要连续、可追溯的历史暴露数据。</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>项目目标</h3>
+            <ul>
+              <li>融合公开数据源，构建可复现的 PM2.5 回顾推断数据管道。</li>
+              <li>系统比较多种算法，选择精度和部署效率兼顾的模型。</li>
+              <li>开发轻量级交互界面，将模型预测转化为空气质量信息。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-top:24px;">
+          <div class="card center"><div class="stat">1,734</div><p>“十四五”期间国控空气站点规模，仍难覆盖所有区域</p></div>
+          <div class="card center"><div class="stat">2003+</div><p>CAMS EAC4 提供长期全球气溶胶再分析数据</p></div>
+          <div class="card center"><div class="stat">全球</div><p>NASA POWER 提供日尺度气象变量接口</p></div>
+        </div>
+        <div class="source">资料依据：WHO 空气质量指南；生态环境部公开资料；NASA 卫星空气质量综述；CAMS EAC4 与 NASA POWER 数据说明。</div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content">
+        <h2>项目定位：端到端应用系统开发</h2>
+        <div class="pipeline">
+          <div class="node"><strong>数据获取</strong><span>AKShare 监测站 PM2.5<br>NASA POWER 气象<br>CAMS EAC4 AOD</span></div>
+          <div class="arrow">→</div>
+          <div class="node"><strong>模型训练与评估</strong><span>17 维特征<br>5 种算法对比<br>10 个随机种子复现实验</span></div>
+          <div class="arrow">→</div>
+          <div class="node"><strong>交互式应用</strong><span>地图选点<br>日期选择<br>PM2.5 与空气质量等级输出</span></div>
+        </div>
+        <div class="grid-4" style="margin-top:34px;">
+          <div class="card center"><h3>多源融合</h3><p>至少 3 类公开数据源</p></div>
+          <div class="card center"><h3>系统对比</h3><p>ResMLP、DCN-V2、CatBoost、LightGBM、XGBoost</p></div>
+          <div class="card center"><h3>可运行代码</h3><p>模块化脚本与 README</p></div>
+          <div class="card center"><h3>成果展示</h3><p>Streamlit 轻量级 Web 界面</p></div>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content chapter">
+        <div>
+          <div class="num">第二章</div>
+          <h1>数据来源与特征工程</h1>
+          <p>用地面标签、气象条件和气溶胶代理变量共同刻画 PM2.5</p>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content">
+        <h2>三类核心数据源</h2>
+        <table>
+          <thead><tr><th>数据类型</th><th>来源</th><th>作用</th><th>覆盖范围</th></tr></thead>
+          <tbody>
+            <tr><td>空气质量标签</td><td>AKShare 真气网监测站</td><td>提供监督学习标签 PM2.5</td><td>2018-2025，中国 8 城 126 站</td></tr>
+            <tr><td>气象变量</td><td>NASA POWER API</td><td>刻画扩散、沉降、湿度和风场条件</td><td>全球，日尺度</td></tr>
+            <tr><td>气溶胶 AOD</td><td>CAMS EAC4 再分析</td><td>提供大气颗粒物的遥感代理变量</td><td>全球，0.75°，2003 年至今</td></tr>
+          </tbody>
+        </table>
+        <div class="grid-3" style="margin-top:34px;">
+          <div class="card center"><div class="stat">310,756</div><p>最终多城市训练样本量</p></div>
+          <div class="card center"><div class="stat">17</div><p>最终输入特征数量</p></div>
+          <div class="card center"><div class="stat">8 城</div><p>北京、上海、广州、成都等城市样本</p></div>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content">
+        <h2>最终特征体系：气象 + AOD + 时间</h2>
+        <div class="grid-3">
+          <div class="card">
+            <h3>9 个 AOD 特征</h3>
+            <p>aod_550、aod_469、aod_865、Angstrom 指数，以及 dust、sulphate、bc、om、ss 等组分 AOD。</p>
+          </div>
+          <div class="card">
+            <h3>7 个气象特征</h3>
+            <p>温度、相对湿度、风速、风向、地表气压、降水量和云量，用于描述污染扩散与沉降条件。</p>
+          </div>
+          <div class="card">
+            <h3>1 个时间特征</h3>
+            <p>day_of_year 编码季节性变化，使模型捕捉一年内污染和气象周期规律。</p>
+          </div>
+        </div>
+        <div class="card" style="margin-top:28px; text-align:center;">
+          <h3>为何不加入 OSM 与 MODIS RGB</h3>
+          <p>消融实验显示，气象 + AOD 已取得最好效果；OSM 属于静态空间代理，难以解释日尺度 PM2.5 波动，MODIS RGB 更偏向地表反射率而非大气气溶胶，加入后会引入冗余或噪声。</p>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content chapter">
+        <div>
+          <div class="num">第三章</div>
+          <h1>算法设计与模型对比</h1>
+          <p>重点介绍 ResMLP，并以四类基线模型进行系统性验证</p>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content">
+        <h2>五种算法：从强基线到最终部署模型</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h3>重点模型：ResMLP</h3>
+            <ul>
+              <li>残差多层感知机，面向标准化后的连续表格特征。</li>
+              <li>输入投影到 128 维隐藏空间，堆叠 4 个残差块。</li>
+              <li>使用 LayerNorm、Dropout、SmoothL1Loss、AdamW、warmup 和早停提升稳定性。</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>简要基线模型</h3>
+            <ul>
+              <li>CatBoost：梯度提升树，对非线性关系和特征交互建模能力较强。</li>
+              <li>LightGBM：高效 GBDT，适合结构化表格数据。</li>
+              <li>XGBoost：经典强基线，用于检验树模型上限。</li>
+              <li>DCN-V2：显式 Cross Network 与深层网络并行建模特征交叉。</li>
+            </ul>
+          </div>
+        </div>
+        <div class="model-diagram">
+          <div class="block"><strong>17 维输入</strong><span>AOD、气象、日期</span></div>
+          <div class="plus">→</div>
+          <div class="block"><strong>残差块堆叠</strong><span>非线性映射 + 残差连接 + 归一化</span></div>
+          <div class="plus">→</div>
+          <div class="block"><strong>回归输出</strong><span>PM2.5 浓度与空气质量等级</span></div>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content">
+        <h2>统一实验设置</h2>
+        <div class="grid-4">
+          <div class="card center"><div class="stat">5</div><p>算法模型系统对比</p></div>
+          <div class="card center"><div class="stat">10</div><p>随机种子 42-51 重复实验</p></div>
+          <div class="card center"><div class="stat">17</div><p>所有模型使用同一输入特征</p></div>
+          <div class="card center"><div class="stat">4</div><p>主要指标：R²、RMSE、MAE、SMAPE</p></div>
+        </div>
+        <div class="card" style="margin-top:36px; text-align:center;">
+          <p>对比实验控制样本集合、特征体系、随机切分策略和评价指标，最终在测试集原始 PM2.5 尺度上报告均值与标准差，以降低单次随机切分和模型初始化带来的偶然性。</p>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content">
+        <h2>模型对比结果：ResMLP 在平均指标上领先</h2>
+        <table>
+          <thead><tr><th>模型</th><th>R² mean±std</th><th>RMSE mean±std</th><th>MAE mean±std</th><th>SMAPE mean±std</th></tr></thead>
+          <tbody>
+            <tr class="highlight"><td>ResMLP (warmup)</td><td>0.8929±0.0031</td><td>9.59±0.14</td><td>6.20±0.04</td><td>21.9±0.1</td></tr>
+            <tr><td>CatBoost</td><td>0.8146±0.0034</td><td>12.61±0.12</td><td>8.40±0.02</td><td>27.3±0.1</td></tr>
+            <tr><td>DCN-V2</td><td>0.8132±0.0042</td><td>12.66±0.12</td><td>8.22±0.03</td><td>27.0±0.1</td></tr>
+            <tr><td>LightGBM</td><td>0.8119±0.0032</td><td>12.70±0.11</td><td>8.53±0.03</td><td>27.8±0.1</td></tr>
+            <tr><td>XGBoost</td><td>0.7727±0.0037</td><td>13.96±0.11</td><td>9.29±0.03</td><td>29.5±0.1</td></tr>
+          </tbody>
+        </table>
+        <div class="bars">
+          <div class="bar-row"><span>ResMLP</span><div class="bar-bg"><div class="bar-fill" style="width:100%;"></div></div><span>R² 0.893</span></div>
+          <div class="bar-row"><span>CatBoost</span><div class="bar-bg"><div class="bar-fill" style="width:91.2%; background:var(--blue);"></div></div><span>0.815</span></div>
+          <div class="bar-row"><span>DCN-V2</span><div class="bar-bg"><div class="bar-fill" style="width:91.1%; background:var(--blue);"></div></div><span>0.813</span></div>
+          <div class="bar-row"><span>LightGBM</span><div class="bar-bg"><div class="bar-fill" style="width:90.9%; background:var(--blue);"></div></div><span>0.812</span></div>
+          <div class="bar-row"><span>XGBoost</span><div class="bar-bg"><div class="bar-fill" style="width:86.5%; background:var(--gold);"></div></div><span>0.773</span></div>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content">
+        <h2>可视化结果与误差解释</h2>
+        <div class="grid-2">
+          <div class="image-frame"><img src="comparison_chart.png" alt="五种算法对比实验图" /></div>
+          <div class="card">
+            <h3>主要结论</h3>
+            <ul>
+              <li>ResMLP 的平均 R² 达到 0.8929，Pearson 相关系数约 0.945。</li>
+              <li>相对 CatBoost，ResMLP 平均 RMSE 下降约 24.0%，MAE 下降约 26.2%。</li>
+              <li>相对 XGBoost，ResMLP 平均 RMSE 下降约 31.4%，MAE 下降约 33.3%。</li>
+              <li>极端污染样本占比低，PM2.5 &gt; 150 μg/m³ 的场景仍可能存在低估。</li>
+            </ul>
+          </div>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content chapter">
+        <div>
+          <div class="num">第四章</div>
+          <h1>系统实现与演示</h1>
+          <p>将离线模型封装成可交互、可复现的轻量级应用</p>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content">
+        <h2>Web 推理应用：输入位置与日期，输出空气质量信息</h2>
+        <div class="grid-2">
+          <div class="image-frame screenshot"><img src="streamlit_demo.png" alt="RetroAir Streamlit 应用界面截图" /></div>
+          <div class="card">
+            <h3>推理流程</h3>
+            <ul>
+              <li>用户在地图上选择经纬度，并选择历史日期。</li>
+              <li>系统在线获取 NASA POWER 气象数据。</li>
+              <li>系统从本地 CAMS NetCDF 中提取 AOD 特征。</li>
+              <li>特征标准化后输入 ResMLP，得到 PM2.5 预测值。</li>
+              <li>根据阈值映射为空气质量等级，便于解释和展示。</li>
+            </ul>
+          </div>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content">
+        <h2>演示环节安排</h2>
+        <div class="demo-box">
+          <h3 style="font-size:34px; margin-bottom:20px;">播放系统演示视频</h3>
+          <p class="lead" style="margin-top:0; max-width:850px;">视频展示 RetroAir 的完整交互流程：选择历史日期与地理位置，系统完成气象数据获取、AOD 特征提取、ResMLP 推理，并输出 PM2.5 浓度和空气质量等级。</p>
+        </div>
+        <div class="card" style="margin-top:24px; text-align:center;">
+          <p>答辩现场将手动切换并播放演示视频，本页仅作为演示环节提示。</p>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content chapter">
+        <div>
+          <div class="num">第五章</div>
+          <h1>团队分工与总结</h1>
+          <p>四个模块分工明确，共同完成从数据到决策的闭环</p>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content">
+        <h2>团队分工声明</h2>
+        <table>
+          <thead><tr><th>成员</th><th>角色</th><th>主要贡献</th><th>工作量</th></tr></thead>
+          <tbody>
+            <tr><td>黄一和</td><td>算法核心</td><td>负责 CAMS AOD 特征提取、ResMLP 与 DCN-V2 等深度模型实现、PyTorch 训练流程与模型调优</td><td>25%</td></tr>
+            <tr><td>夏浩博</td><td>数据工程</td><td>负责 PM2.5 标签抓取、NASA POWER 气象数据下载、多源数据合并、去重与最终数据集构建</td><td>25%</td></tr>
+            <tr><td>黄迪</td><td>实验评估</td><td>负责 CatBoost、LightGBM、XGBoost 训练入口、多算法统一对比、特征消融实验与结果可视化</td><td>25%</td></tr>
+            <tr><td>许君达</td><td>工程部署</td><td>负责数据加载与评估工具、推理管线封装、Streamlit 应用开发、README 与演示材料整合</td><td>25%</td></tr>
+          </tbody>
+        </table>
+        <div class="card" style="margin-top:26px; text-align:center;"><p>分工覆盖项目要求中的数据处理、模型训练、模型评估、交互展示与最终交付。</p></div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content">
+        <h2>项目总结</h2>
+        <div class="grid-3">
+          <div class="card center"><h3>数据层面</h3><p>融合 AKShare、NASA POWER 和 CAMS EAC4，构建可复现的多源 PM2.5 回顾推断数据集。</p></div>
+          <div class="card center"><h3>模型层面</h3><p>完成五种算法系统比较，ResMLP 在 10 个随机种子平均指标上取得最优表现。</p></div>
+          <div class="card center"><h3>应用层面</h3><p>实现 Streamlit 交互界面，支持地图选点、日期选择、一键推理和空气质量等级展示。</p></div>
+        </div>
+        <div class="card" style="margin-top:32px; text-align:center;">
+          <h3>后续改进方向</h3>
+          <p>引入更高空间分辨率遥感产品、动态交通或人口特征；对极端污染样本进行重采样或加权训练；补充跨城市、跨站点的空间泛化验证。</p>
+        </div>
+      </div></div>
+    </section>
+
+    <section class="slide">
+      <div class="canvas"><div class="content chapter">
+        <div>
+          <h1>感谢老师交流指导</h1>
+          <p>RetroAir 项目答辩</p>
+        </div>
+      </div></div>
+    </section>
+  </main>
+
+  <div class="page-no" id="pageNo">1 / 19</div>
+  <div class="footer-nav">
+    <button onclick="prevSlide()">上一页</button>
+    <button onclick="nextSlide()">下一页</button>
+  </div>
+
+  <script>
+    const slides = Array.from(document.querySelectorAll('.slide'));
+    const pageNo = document.getElementById('pageNo');
+    let index = 0;
+
+    function showSlide(i) {
+      index = (i + slides.length) % slides.length;
+      slides.forEach((slide, n) => slide.classList.toggle('active', n === index));
+      pageNo.textContent = `${index + 1} / ${slides.length}`;
+    }
+    function nextSlide() { showSlide(index + 1); }
+    function prevSlide() { showSlide(index - 1); }
+    showSlide(0);
+
+    document.addEventListener('keydown', (event) => {
+      if (['ArrowRight', 'PageDown', ' '].includes(event.key)) nextSlide();
+      if (['ArrowLeft', 'PageUp', 'Backspace'].includes(event.key)) prevSlide();
+      if (event.key === 'Home') showSlide(0);
+      if (event.key === 'End') showSlide(slides.length - 1);
+    });
+  </script>
+</body>
+</html>

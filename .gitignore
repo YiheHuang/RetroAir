@@ -12,3 +12,6 @@ old_repo/
 *.out
 
 AGENTS.md
+.env
+!.env.example
+catboost_info/
